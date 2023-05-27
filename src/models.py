@@ -49,7 +49,7 @@ class LinearRegression():
         sum_of_residual_squares = np.sum(np.square(y - X.dot(self.theta)))
         self.r_squared = 1 - (sum_of_residual_squares / sum_of_total_squares)
 
-    def calculate_p_values(self, X, y):
+    def calculate_p_values(self, X):
         """
         Calculates the p-values based on a two tailed hypothesis test for the coefficients.
         :param X: Numpy array of shape (m, n) containing the training examples.
@@ -58,7 +58,35 @@ class LinearRegression():
         """
         degrees_of_freedom = X.shape[0] - X.shape[1] - 1
         t_stats = self.theta / self.standard_errors
-        self.p_values = [t.pdf(t_stat, degrees_of_freedom) for t_stat in t_stats]
+        self.p_values = [LinearRegression.get_students_t_pdf_value(np.abs(t_stat), degrees_of_freedom) for t_stat in t_stats]
+
+
+    @staticmethod
+    def get_students_t_pdf_value(value, degrees_of_freedom):
+        """
+        Calculates the probability density function value for a given value and degrees of freedom.
+        :param value: The value to calculate the pdf for.
+        :param degrees_of_freedom: The degrees of freedom.
+        :return: The pdf value.
+        """
+        
+        counter = np.math.factorial((degrees_of_freedom + 1) / 2)
+        denominator = np.math.factorial(degrees_of_freedom / 2) * np.sqrt(degrees_of_freedom * np.pi)
+        first_term = counter / denominator
+        second_term = (1 + (value**2 / degrees_of_freedom))**(-(degrees_of_freedom + 1) / 2)
+        return first_term * second_term
+    
+
+    def predict(self, X):
+        """
+        Predicts the target values for the given examples.
+        :param X: Numpy array of shape (m, n) containing the examples.
+        :return: Numpy array of shape (m, 1) containing the predicted target values.
+        """
+        return X.dot(self.theta)
+    
+    
+
 
 
     
