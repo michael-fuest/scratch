@@ -1,7 +1,7 @@
 import numpy as np
-from scipy.stats import t
+from scipy.special import gamma
 
-class LinearRegression():
+class CustomLinearRegression():
 
     def __init__(self):
         self.theta = None
@@ -17,10 +17,11 @@ class LinearRegression():
         :param y: Numpy array of shape (m, 1) containing the target values.
         :return: None
         """
+        X = np.insert(X, 0, 1, axis=1)
         self.theta = np.linalg.inv(np.transpose(X).dot(X)).dot(np.transpose(X)).dot(y)
-        self.calculate_r_squared(self, X, y)
-        self.calculate_standard_errors(self, X, y)
-        self.calculate_p_values(self, X, y)
+        self.calculate_r_squared(X, y)
+        self.calculate_standard_errors(X, y)
+        self.calculate_p_values(X)
         
 
     
@@ -57,8 +58,11 @@ class LinearRegression():
         :return: None
         """
         degrees_of_freedom = X.shape[0] - X.shape[1] - 1
+
+        assert(degrees_of_freedom > 0, "The degrees of freedom must be greater than zero.")
+
         t_stats = self.theta / self.standard_errors
-        self.p_values = [LinearRegression.get_students_t_pdf_value(np.abs(t_stat), degrees_of_freedom) for t_stat in t_stats]
+        self.p_values = [CustomLinearRegression.get_students_t_pdf_value(np.abs(t_stat), degrees_of_freedom) for t_stat in t_stats]
 
 
     @staticmethod
@@ -70,8 +74,11 @@ class LinearRegression():
         :return: The pdf value.
         """
         
-        counter = np.math.factorial((degrees_of_freedom + 1) / 2)
-        denominator = np.math.factorial(degrees_of_freedom / 2) * np.sqrt(degrees_of_freedom * np.pi)
+        counter = gamma((degrees_of_freedom + 1) / 2)
+        denominator = gamma(degrees_of_freedom / 2) * np.sqrt(degrees_of_freedom * np.pi)
+
+        assert (denominator != 0, "The denominator cannot be zero.")
+
         first_term = counter / denominator
         second_term = (1 + (value**2 / degrees_of_freedom))**(-(degrees_of_freedom + 1) / 2)
         return first_term * second_term
@@ -86,7 +93,10 @@ class LinearRegression():
         return X.dot(self.theta)
     
     
-
+X = np.array([[1, 2], [4, 5], [7, 8], [2, 5], [4, 7]])
+y = np.array([[1], [2], [3], [0], [8]])
+reg = CustomLinearRegression()
+reg.fit(X, y)
 
 
     
