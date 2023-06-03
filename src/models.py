@@ -5,6 +5,8 @@ class CustomLinearRegression():
 
     def __init__(self):
         self.theta = None
+        self.coefficients = None
+        self.intercept = None
         self.standard_errors = None
         self.p_values = None
         self.r_squared = None
@@ -13,12 +15,18 @@ class CustomLinearRegression():
     def fit(self, X, y):
         """
         Fits a linear regression model using the normal equation.
-        :param X: Numpy array of shape (m, n) containing the training examples.
-        :param y: Numpy array of shape (m, 1) containing the target values.
+        :param X: Numpy array of shape (n, m) containing the training examples.
+        :param y: Numpy array of shape (n, 1) containing the target values.
         :return: None
         """
+        n = X.shape[0]
+        m = X.shape[1]
         X = np.insert(X, 0, 1, axis=1)
-        self.theta = np.linalg.inv(np.transpose(X).dot(X)).dot(np.transpose(X)).dot(y)
+        X = X.T
+        self.theta = np.linalg.inv(X.dot(X.T)).dot(X).dot(y)
+        self.intercept = self.theta[0]
+        self.coefficients = self.theta[1:]
+        self.coefficients = self.coefficients.reshape(1, m)
         self.calculate_r_squared(X, y)
         self.calculate_standard_errors(X, y)
         self.calculate_p_values(X)
@@ -32,22 +40,26 @@ class CustomLinearRegression():
         :param y: Numpy array of shape (m, 1) containing the target values.
         :return: None
         """
-        error = y - X.dot(self.theta)
-        sigma = np.var(error)
-        self.standard_errors = np.sqrt(np.diagonal(sigma * np.linalg.inv(np.transpose(X).dot(X))))
+        sse = np.sum(np.square(y - X.T.dot(self.theta)))
+        df = X.shape[1] - X.shape[0] - 1
+        regression_variance = sse / df
+        sum_of_variation_X = sum(np.square(X.T - np.mean(X, axis = 1)))
+        r_squared_j = np.square(X - np.mean(X, axis = 1)) / sum_of_variation_X
+
+
 
 
 
     def calculate_r_squared(self, X, y):
         """
         Calculates the coefficient of determination (R^2) for the model.
-        :param X: Numpy array of shape (m, n) containing the training examples.
-        :param y: Numpy array of shape (m, 1) containing the target values.
+        :param X: Numpy array of shape (n, m) containing the training examples.
+        :param y: Numpy array of shape (n, 1) containing the target values.
         :return: None
         """
-        x_bar = np.mean(X)
-        sum_of_total_squares = np.sum(np.square(X - x_bar))
-        sum_of_residual_squares = np.sum(np.square(y - X.dot(self.theta)))
+        y_bar = np.mean(y)
+        sum_of_total_squares = np.sum(np.square(y - y_bar))
+        sum_of_residual_squares = np.sum(np.square(y - X.T.dot(self.theta)))
         self.r_squared = 1 - (sum_of_residual_squares / sum_of_total_squares)
 
     def calculate_p_values(self, X):
@@ -91,12 +103,6 @@ class CustomLinearRegression():
         :return: Numpy array of shape (m, 1) containing the predicted target values.
         """
         return X.dot(self.theta)
-    
-    
-X = np.array([[1, 2], [4, 5], [7, 8], [2, 5], [4, 7]])
-y = np.array([[1], [2], [3], [0], [8]])
-reg = CustomLinearRegression()
-reg.fit(X, y)
 
 
     
