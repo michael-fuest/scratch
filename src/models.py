@@ -26,7 +26,7 @@ class CustomLinearRegression():
         self.theta = np.linalg.inv(X.dot(X.T)).dot(X).dot(y)
         self.intercept = self.theta[0]
         self.coefficients = self.theta[1:]
-        self.coefficients = self.coefficients.reshape(1, m)
+        self.coefficients = self.coefficients.reshape(m,)
         self.calculate_r_squared(X, y)
         #self.calculate_standard_errors(X, y)
         #self.calculate_p_values(X)
