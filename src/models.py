@@ -5,6 +5,8 @@ class CustomLinearRegression():
 
     def __init__(self):
         self.theta = None
+        self.coefficients = None
+        self.intercept = None
         self.standard_errors = None
         self.p_values = None
         self.r_squared = None
@@ -17,28 +19,31 @@ class CustomLinearRegression():
         :param y: Numpy array of shape (n, 1) containing the target values.
         :return: None
         """
-
-        assert(X.shape[0] == y.shape[0], "The number of rows in X must equal the number of rows in y.")
-
+        n = X.shape[0]
+        m = X.shape[1]
         X = np.insert(X, 0, 1, axis=1)
-        self.theta = np.linalg.inv(np.transpose(X).dot(X)).dot(np.transpose(X)).dot(y)
+        X = X.T
+        self.theta = np.linalg.inv(X.dot(X.T)).dot(X).dot(y)
+        self.intercept = self.theta[0]
+        self.coefficients = self.theta[1:]
+        self.coefficients = self.coefficients.reshape(1, m)
         self.calculate_r_squared(X, y)
-        self.calculate_standard_errors(X, y)
-        self.calculate_p_values(X)
+        #self.calculate_standard_errors(X, y)
+        #self.calculate_p_values(X)
         
 
-    
     def calculate_standard_errors(self, X, y):
         """
         Calculates the standard errors of the coefficients.
-        :param X: Numpy array of shape (n, m) containing the training examples.
-        :param y: Numpy array of shape (n, 1) containing the target values.
+        :param X: Numpy array of shape (m, n) containing the training examples.
+        :param y: Numpy array of shape (m, 1) containing the target values.
         :return: None
         """
-        error = y - X.dot(self.theta)
-        sigma = np.var(error)
-        self.standard_errors = np.sqrt(np.diagonal(sigma * np.linalg.inv(np.transpose(X).dot(X))))
-
+        sse = np.sum(np.square(y - X.T.dot(self.theta)))
+        df = X.shape[1] - X.shape[0] - 1
+        regression_variance = sse / df
+        sum_of_variation_X = sum(np.square(X.T - np.mean(X, axis = 1)))
+        r_squared_j = np.square(X - np.mean(X, axis = 1)) / sum_of_variation_X
 
 
     def calculate_r_squared(self, X, y):
@@ -48,21 +53,22 @@ class CustomLinearRegression():
         :param y: Numpy array of shape (n, 1) containing the target values.
         :return: None
         """
-        x_bar = np.mean(X)
-        sum_of_total_squares = np.sum(np.square(X - x_bar))
-        sum_of_residual_squares = np.sum(np.square(y - X.dot(self.theta)))
+        y_bar = np.mean(y)
+        sum_of_total_squares = np.sum(np.square(y - y_bar))
+        sum_of_residual_squares = np.sum(np.square(y - X.T.dot(self.theta)))
         self.r_squared = 1 - (sum_of_residual_squares / sum_of_total_squares)
+
 
     def calculate_p_values(self, X):
         """
         Calculates the p-values based on a two tailed hypothesis test for the coefficients.
-        :param X: Numpy array of shape (n, m) containing the training examples.
-        :param y: Numpy array of shape (n, 1) containing the target values.
+        :param X: Numpy array of shape (m, n) containing the training examples.
+        :param y: Numpy array of shape (m, 1) containing the target values.
         :return: None
         """
         degrees_of_freedom = X.shape[0] - X.shape[1] - 1
 
-        assert(degrees_of_freedom > 0, "The degrees of freedom must be greater than zero.")
+        assert degrees_of_freedom > 0, "The degrees of freedom must be greater than zero."
 
         t_stats = self.theta / self.standard_errors
         self.p_values = [CustomLinearRegression.get_students_t_pdf_value(np.abs(t_stat), degrees_of_freedom) for t_stat in t_stats]
@@ -80,7 +86,7 @@ class CustomLinearRegression():
         counter = gamma((degrees_of_freedom + 1) / 2)
         denominator = gamma(degrees_of_freedom / 2) * np.sqrt(degrees_of_freedom * np.pi)
 
-        assert (denominator != 0, "The denominator cannot be zero.")
+        assert denominator != 0, "The denominator cannot be zero."
 
         first_term = counter / denominator
         second_term = (1 + (value**2 / degrees_of_freedom))**(-(degrees_of_freedom + 1) / 2)
@@ -90,12 +96,9 @@ class CustomLinearRegression():
     def predict(self, X):
         """
         Predicts the target values for the given examples.
-        :param X: Numpy array of shape (n, m) containing the examples.
-        :return: Numpy array of shape (n, 1) containing the predicted target values.
+        :param X: Numpy array of shape (m, n) containing the examples.
+        :return: Numpy array of shape (m, 1) containing the predicted target values.
         """
-        
-        assert (self.theta is not None, "The model must be fitted before predictions can be made.")
-
         return X.dot(self.theta)
 
 
