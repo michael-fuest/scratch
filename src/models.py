@@ -28,22 +28,23 @@ class CustomLinearRegression():
         self.coefficients = self.theta[1:]
         self.coefficients = self.coefficients.reshape(m,)
         self.calculate_r_squared(X, y)
-        #self.calculate_standard_errors(X, y)
+        self.calculate_standard_errors(X, y)
         #self.calculate_p_values(X)
         
 
     def calculate_standard_errors(self, X, y):
         """
         Calculates the standard errors of the coefficients.
-        :param X: Numpy array of shape (m, n) containing the training examples.
-        :param y: Numpy array of shape (m, 1) containing the target values.
+        :param X: Numpy array of shape (n, m) containing the training examples.
+        :param y: Numpy array of shape (n, 1) containing the target values.
         :return: None
         """
-        sse = np.sum(np.square(y - X.T.dot(self.theta)))
-        df = X.shape[1] - X.shape[0] - 1
-        regression_variance = sse / df
-        sum_of_variation_X = sum(np.square(X.T - np.mean(X, axis = 1)))
-        r_squared_j = np.square(X - np.mean(X, axis = 1)) / sum_of_variation_X
+        residuals = y - X.T.dot(self.theta)
+        residual_variance = np.var(residuals, ddof=len(self.theta))
+        cov_matrix = np.linalg.inv(np.dot(X, X.T))
+        self.standard_errors = np.sqrt(np.diagonal(residual_variance * cov_matrix))
+
+
 
 
     def calculate_r_squared(self, X, y):
@@ -62,8 +63,8 @@ class CustomLinearRegression():
     def calculate_p_values(self, X):
         """
         Calculates the p-values based on a two tailed hypothesis test for the coefficients.
-        :param X: Numpy array of shape (m, n) containing the training examples.
-        :param y: Numpy array of shape (m, 1) containing the target values.
+        :param X: Numpy array of shape (n, m) containing the training examples.
+        :param y: Numpy array of shape (n, 1) containing the target values.
         :return: None
         """
         degrees_of_freedom = X.shape[0] - X.shape[1] - 1
@@ -96,8 +97,8 @@ class CustomLinearRegression():
     def predict(self, X):
         """
         Predicts the target values for the given examples.
-        :param X: Numpy array of shape (m, n) containing the examples.
-        :return: Numpy array of shape (m, 1) containing the predicted target values.
+        :param X: Numpy array of shape (n, m) containing the examples.
+        :return: Numpy array of shape (n, 1) containing the predicted target values.
         """
         return X.dot(self.theta)
 

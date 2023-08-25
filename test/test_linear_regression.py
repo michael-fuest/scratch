@@ -32,7 +32,9 @@ def sklearn_linear_regression() -> LinearRegression:
 
 @pytest.fixture
 def statsmodels_linear_regression(housing_data_x, housing_data_y) -> sm.OLS:
-    return sm.OLS(pd.DataFrame(housing_data_x), housing_data_y)
+    x = sm.add_constant(housing_data_x)
+    y_reshaped = housing_data_y.reshape(-1, 1)
+    return sm.OLS(y_reshaped, x)
 
 @pytest.fixture
 def custom_linear_regression() -> CustomLinearRegression:
@@ -52,9 +54,12 @@ def test_linear_regression_fit(
     # Act
     custom_linear_regression.fit(housing_data_x, housing_data_y)
     sklearn_linear_regression.fit(housing_data_x, housing_data_y)
+    res = statsmodels_linear_regression.fit()
 
     # Assert
     assert custom_linear_regression.coefficients == pytest.approx(sklearn_linear_regression.coef_, 1e-10)
+    assert custom_linear_regression.intercept == pytest.approx(sklearn_linear_regression.intercept_, 1e-10)
+    assert custom_linear_regression.r_squared == pytest.approx(res.rsquared, 1e-10)
 
 def test_standard_errors() -> None:
     """
@@ -64,7 +69,7 @@ def test_standard_errors() -> None:
    # Act
     custom_linear_regression.fit(housing_data_x, housing_data_y)
     sklearn_linear_regression.fit(housing_data_x, housing_data_y)
-    statsmodels_linear_regression.fit(housing_data_x, housing_data_y)
+    statsmodels_linear_regression.fit()
 
     # Assert
     assert custom_linear_regression.standard_errors == pytest.approx(statsmodels_linear_regression.bse, 1e-10)
