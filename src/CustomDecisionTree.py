@@ -16,13 +16,17 @@ class DecisionTreeNode:
 
 class CustomDecisionTree:
 
-    def __init__(self, root, max_depth, min_samples_split=2, min_impurity=1e-7):
-        self.root = root
+    def __init__(self, max_depth=10, min_samples_split=2, min_impurity=1e-7):
+        self.root = DecisionTreeNode(None, None, None, None)
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_impurity = min_impurity
 
     def _grow_tree(self, X, y, node, depth):
+
+        #reshape X to have dimensions 4, 100
+        X = np.array(X)
+        y = np.array(y)
 
         if depth >= self.max_depth:
             return
@@ -48,9 +52,9 @@ class CustomDecisionTree:
         best_gain = 0
         best_threshold = None
 
-        for val in set(X[feature_index]):
+        for val in set(X.T[feature_index]):
 
-            left_x, left_y, right_x, right_y = self.split(X[feature_index], y, val)
+            left_x, left_y, right_x, right_y = self.split(X, y, val, feature_index)
             entropy_left = self.calculate_entropy(left_y)
             entropy_right = self.calculate_entropy(right_y)
 
@@ -67,17 +71,17 @@ class CustomDecisionTree:
 
         parent_impurity = self.calculate_entropy(y)
         best_gain = 0
-        best_feature = None
+        best_feature_index = None
         best_threshold = None
 
-        for feature in range(X.shape[1]):
-            threshold, gain = self.get_splitting_criterion(X, y, feature, parent_impurity)
+        for feature_index in range(X.shape[1]):
+            threshold, gain = self.get_splitting_criterion(X, y, feature_index, parent_impurity)
             if gain > self.min_impurity and gain > best_gain:
                 best_gain = gain
-                best_feature = feature
+                best_feature_index = feature_index
                 best_threshold = threshold
 
-        return best_feature, best_threshold, best_gain
+        return best_feature_index, best_threshold, best_gain
 
     def split(self, X, y, threshold, feature_index):
 
@@ -86,8 +90,8 @@ class CustomDecisionTree:
         right_X = []
         right_y = []
 
-        for i in range(len(X)):
-            if X[i][feature_index] < threshold:
+        for i in range(X.shape[0]):
+            if X.T[feature_index][i] < threshold:
                 left_X.append(X[i])
                 left_y.append(y[i])
             else:
@@ -97,19 +101,16 @@ class CustomDecisionTree:
         return left_X, left_y, right_X, right_y
 
     def fit(self, X, y):
-
-        self.root = DecisionTreeNode(None, None, None, None)
         self._grow_tree(X, y, self.root, 0)
 
     def predict(self, X):
-
         return np.array([self._predict(x, self.root) for x in X])
 
     def _predict(self, x, node):
 
         if node.is_leaf_node():
             return node.value
-        
+
         if x[node.feature_index] < node.threshold:
             return self._predict(x, node.left)
 
