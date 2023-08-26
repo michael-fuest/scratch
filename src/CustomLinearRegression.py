@@ -29,7 +29,7 @@ class CustomLinearRegression():
         self.coefficients = self.coefficients.reshape(m,)
         self.calculate_r_squared(X, y)
         self.calculate_standard_errors(X, y)
-        #self.calculate_p_values(X)
+        self.calculate_p_values(X)
         
 
     def calculate_standard_errors(self, X, y):
@@ -62,18 +62,16 @@ class CustomLinearRegression():
 
     def calculate_p_values(self, X):
         """
-        Calculates the p-values based on a two tailed hypothesis test for the coefficients.
+        Calculates the p-values based on a two-tailed hypothesis t-test for the coefficients.
         :param X: Numpy array of shape (n, m) containing the training examples.
         :param y: Numpy array of shape (n, 1) containing the target values.
         :return: None
         """
-        degrees_of_freedom = X.shape[0] - X.shape[1] - 1
+        degrees_of_freedom = X.shape[1] - X.shape[0] - 1
 
         assert degrees_of_freedom > 0, "The degrees of freedom must be greater than zero."
-
         t_stats = self.theta / self.standard_errors
-        self.p_values = [CustomLinearRegression.get_students_t_pdf_value(np.abs(t_stat), degrees_of_freedom) for t_stat in t_stats]
-
+        self.p_values = 2 * (1 - CustomLinearRegression.get_students_t_pdf_value(np.abs(t_stats), degrees_of_freedom))
 
     @staticmethod
     def get_students_t_pdf_value(value, degrees_of_freedom):

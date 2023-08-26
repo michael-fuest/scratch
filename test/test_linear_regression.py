@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression
 
 
 from utils.classes import FileManager
-from src.models import CustomLinearRegression
+from src.CustomLinearRegression import CustomLinearRegression
 
 @pytest.fixture
 def file_manager():
@@ -60,36 +60,9 @@ def test_linear_regression_fit(
     assert custom_linear_regression.coefficients == pytest.approx(sklearn_linear_regression.coef_, 1e-10)
     assert custom_linear_regression.intercept == pytest.approx(sklearn_linear_regression.intercept_, 1e-10)
     assert custom_linear_regression.r_squared == pytest.approx(res.rsquared, 1e-10)
-
-def test_standard_errors() -> None:
-    """
-    Tests the standard_errors method of the LinearRegression class.
-    :return: None
-    """
-   # Act
-    custom_linear_regression.fit(housing_data_x, housing_data_y)
-    sklearn_linear_regression.fit(housing_data_x, housing_data_y)
-    statsmodels_linear_regression.fit()
-
-    # Assert
-    assert custom_linear_regression.standard_errors == pytest.approx(statsmodels_linear_regression.bse, 1e-10)
-
-    return None
-
-def test_p_values() -> None:
-    """
-    Tests the p_values method of the LinearRegression class.
-    :return: None
-    """
-   # Act
-    custom_linear_regression.fit(housing_data_x, housing_data_y)
-    sklearn_linear_regression.fit(housing_data_x, housing_data_y)
-    statsmodels_linear_regression.fit(housing_data_x, housing_data_y)
-
-    # Assert
-    assert custom_linear_regression.p_values == pytest.approx(statsmodels_linear_regression.pvalues, 1e-10)
-
-    return None
+    assert custom_linear_regression.adjusted_r_squared == pytest.approx(res.rsquared_adj, 1e-10)
+    assert custom_linear_regression.standard_errors == pytest.approx(res.bse, 1e-10)
+    assert custom_linear_regression.p_values == pytest.approx(res.pvalues, 1e-10)
 
 
 
