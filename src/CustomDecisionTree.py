@@ -22,17 +22,98 @@ class CustomDecisionTree:
         self.min_samples_split = min_samples_split
         self.min_impurity = min_impurity
 
-    def get_splitting_criterion(self, X, y):
-        pass
+    def _grow_tree(self, X, y, node, depth):
+
+        if depth >= self.max_depth:
+            return
+
+        feature, threshold, gain = self.get_best_split(X, y)
+
+        if gain < self.min_impurity:
+            return
+
+        left_X, left_y, right_X, right_y = self.split(X, y, threshold, feature)
+
+        node.feature_index = feature
+        node.threshold = threshold
+        node.left = DecisionTreeNode(None, None, None, None)
+        node.right = DecisionTreeNode(None, None, None, None)
+
+        self._grow_tree(left_X, left_y, node.left, depth+1)
+        self._grow_tree(right_X, right_y, node.right, depth+1)
+
+    def get_splitting_criterion(self, X, y, feature_index, parent_impurity):
+
+        # Initialize variables to keep track of the best split
+        best_gain = 0
+        best_threshold = None
+
+        for val in set(X[feature_index]):
+
+            left_x, left_y, right_x, right_y = self.split(X[feature_index], y, val)
+            entropy_left = self.calculate_entropy(left_y)
+            entropy_right = self.calculate_entropy(right_y)
+
+            # Calculate the information gain from this split
+            info_gain = parent_impurity - (len(left_y)/len(y) * entropy_left + len(right_y)/len(y) * entropy_right)
+            if info_gain > best_gain:
+                best_threshold = val
+                best_gain = max(info_gain, best_gain)
+
+        return best_threshold, best_gain
+
 
     def get_best_split(self, X, y):
-        pass
 
-    def split(self, X, y, depth=0):
-        pass
+        parent_impurity = self.calculate_entropy(y)
+        best_gain = 0
+        best_feature = None
+        best_threshold = None
+
+        for feature in range(X.shape[1]):
+            threshold, gain = self.get_splitting_criterion(X, y, feature, parent_impurity)
+            if gain > self.min_impurity and gain > best_gain:
+                best_gain = gain
+                best_feature = feature
+                best_threshold = threshold
+
+        return best_feature, best_threshold, best_gain
+
+    def split(self, X, y, threshold, feature_index):
+
+        left_X = []
+        left_y = []
+        right_X = []
+        right_y = []
+
+        for i in range(len(X)):
+            if X[i][feature_index] < threshold:
+                left_X.append(X[i])
+                left_y.append(y[i])
+            else:
+                right_X.append(X[i])
+                right_y.append(y[i])
+
+        return left_X, left_y, right_X, right_y
 
     def fit(self, X, y):
-        pass
+
+        self.root = DecisionTreeNode(None, None, None, None)
+        self._grow_tree(X, y, self.root, 0)
+
+    def predict(self, X):
+
+        return np.array([self._predict(x, self.root) for x in X])
+
+    def _predict(self, x, node):
+
+        if node.is_leaf_node():
+            return node.value
+        
+        if x[node.feature_index] < node.threshold:
+            return self._predict(x, node.left)
+
+        return self._predict(x, node.right)
 
     @staticmethod
     def calculate_entropy(y):
