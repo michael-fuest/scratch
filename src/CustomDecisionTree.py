@@ -108,18 +108,20 @@ class CustomDecisionTree:
     def predict(self, X):
         return np.array([self._predict(x, self.root) for x in X])
 
-    def _predict(self, x, node):
+    def predict_proba(self, X):
+        pred = np.array([self._predict(x, self.root, proba=True) for x in X])
+        return np.array([[1-p, p] for p in pred])
+
+
+    def _predict(self, x, node, proba=False):
 
         if node.is_leaf_node():
-            return round(node.value)
-
-        if (node.left.value == None and node.left.is_leaf_node()) or (node.right.value == None and node.right.is_leaf_node()):
-            return node
+            return round(node.value) if not proba else node.value
 
         if x[node.feature_index] < node.threshold:
-            return self._predict(x, node.left)
+            return self._predict(x, node.left, proba)
 
-        return self._predict(x, node.right)
+        return self._predict(x, node.right, proba)
 
     @staticmethod
     def calculate_entropy(y):
