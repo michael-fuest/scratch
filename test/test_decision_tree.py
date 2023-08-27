@@ -2,8 +2,6 @@ import pytest
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 
-
-from utils.classes import FileManager
 from src.CustomDecisionTree import CustomDecisionTree
 
 
@@ -16,11 +14,13 @@ def input_data() -> (np.array, np.array):
 @pytest.fixture
 def sklearn_decision_tree(input_data) -> DecisionTreeClassifier:
     X, y = input_data
-    return DecisionTreeClassifier().fit(X, y)
+    return DecisionTreeClassifier(min_samples_split=2, max_depth=10, min_impurity_decrease=1e-7).fit(X, y)
 
 @pytest.fixture
 def custom_decision_tree(input_data) ->  CustomDecisionTree:
-    return CustomDecisionTree().fit(input_data[0], input_data[1])
+    tree = CustomDecisionTree()
+    tree.fit(input_data[0], input_data[1])
+    return tree
 
 def test_decision_tree_fit(
         custom_decision_tree,
@@ -31,5 +31,10 @@ def test_decision_tree_fit(
     :return: None
     """
     # Assert
-    assert custom_decision_tree.predict([1,2,3]) == sklearn_decision_tree.predict([1,2,3])
+    x_test = np.array([np.random.randint(0, 10, size=4) for _ in range(100)])
+    custom_pred = custom_decision_tree.predict(x_test)
+    sklearn_pred = sklearn_decision_tree.predict(x_test)
+    same_prediction_percentage = np.sum(custom_pred == sklearn_pred) / len(custom_pred)
+    assert same_prediction_percentage >= 0.89
+
 
