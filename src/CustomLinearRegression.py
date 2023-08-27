@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.special import gamma
 
-class CustomLinearRegression():
+class CustomLinearRegression:
 
     def __init__(self):
         self.theta = None
