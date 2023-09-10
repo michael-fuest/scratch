@@ -1,12 +1,11 @@
 import numpy as np
 
 
-class LogisticRegression:
-    def __init__(self, learning_rate=0.01, num_iterations=1000, regularization=None, lambda_val=0.1):
+class CustomLogisticRegression:
+    def __init__(self, learning_rate=0.01, num_iterations=1000, regularization=None):
         self.learning_rate = learning_rate
         self.num_iterations = num_iterations
         self.regularization = regularization
-        self.lambda_val = lambda_val
         self.weights = None
         self.bias = None
 
@@ -15,7 +14,6 @@ class LogisticRegression:
 
 
     def cost_function(self, y, y_pred):
-
         log_loss = np.sum([yi * np.log(yi_pred) + (1 - yi) * np.log(1 - yi_pred) for yi, yi_pred in zip(y, y_pred)])
         return log_loss
 
@@ -37,4 +35,5 @@ class LogisticRegression:
         return np.round(y_pred)
 
     def predict_proba(self, X):
-        return self.sigmoid(np.dot(X, self.weights) + self.bias)
+        preds = self.sigmoid(np.dot(X, self.weights) + self.bias)
+        return np.array([[1 - p, p] for p in preds])
